@@ -9,6 +9,18 @@ import {
 const emit = defineEmits(['newGame', 'continue'])
 const sessions = ref([])
 
+// ── 世界搜索 / 折叠 ─────────────────────────────
+const searchQuery = ref('')
+const isWorldsCollapsed = ref(false)
+const filteredWorlds = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  if (!q) return worlds.builtin
+  return worlds.builtin.filter(w =>
+    (w.name || '').toLowerCase().includes(q) ||
+    (w.desc || '').toLowerCase().includes(q)
+  )
+})
+
 // ── 上传小说 → 建世界 ─────────────────────────────
 const file = ref(null)
 const apiKey = ref(localStorage.getItem('douluo_api_key') || '')
@@ -154,11 +166,19 @@ onMounted(async () => {
 
       <!-- 创作者已开发的世界 -->
       <section class="mb-10">
-        <h2 class="text-lg font-semibold text-stone-300 mb-3 flex items-center gap-2">
-          ✦ 创作者已开发的世界
-        </h2>
-        <div v-if="worlds.builtin.length" class="grid gap-3 sm:grid-cols-2">
-          <div v-for="w in worlds.builtin" :key="w.id"
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-lg font-semibold text-stone-300 flex items-center gap-2">
+            ✦ 创作者已开发的世界
+          </h2>
+          <div class="flex items-center">
+            <input v-model="searchQuery" placeholder="搜索世界..." class="bg-stone-800 border border-stone-700 text-stone-200 text-xs rounded px-2 py-1 w-24 focus:w-32 transition-all mr-2" />
+            <button @click="isWorldsCollapsed = !isWorldsCollapsed" class="text-xs text-stone-400 hover:text-amber-300 whitespace-nowrap">
+              {{ isWorldsCollapsed ? '展开 ▼' : '收起 ▲' }}
+            </button>
+          </div>
+        </div>
+        <div v-if="worlds.builtin.length" v-show="!isWorldsCollapsed" class="grid gap-3 sm:grid-cols-2">
+          <div v-for="w in filteredWorlds" :key="w.id"
             class="rounded-lg border border-amber-800/50 bg-stone-900/70 p-5 flex flex-col hover:border-amber-500/70 transition">
             <div class="flex items-center justify-between mb-1">
               <h3 class="text-xl font-bold text-amber-200">{{ w.name }}</h3>
@@ -176,6 +196,7 @@ onMounted(async () => {
               </button>
             </div>
           </div>
+          <p v-if="searchQuery && !filteredWorlds.length" class="text-sm text-stone-500 sm:col-span-2">没有找到匹配「{{ searchQuery }}」的世界</p>
         </div>
         <p v-else class="text-sm text-stone-500">世界加载中…</p>
       </section>
