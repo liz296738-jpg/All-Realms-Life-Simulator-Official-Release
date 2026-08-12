@@ -137,7 +137,7 @@ function continueSave(save) {
 onMounted(async () => {
   refreshEntitlement()
   loadWorlds()
-  try { const d = await api.saves(); sessions.value = d.saves || [] } catch {}
+  try { const d = await api.saves(clientId()); sessions.value = d.saves || [] } catch {}
 })
 </script>
 

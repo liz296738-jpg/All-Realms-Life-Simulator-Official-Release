@@ -362,6 +362,9 @@ def health():
 
 @router.get("/api/saves")
 def list_saves(client_id: str | None = None):
+    # 越权防线：无 client_id 一律返回空列表，绝不触底读取（否则 list_sessions(None) 会放行全部存档）
+    if not client_id:
+        return {"saves": []}
     return {"saves": sm.list_sessions(client_id=client_id)}
 
 
