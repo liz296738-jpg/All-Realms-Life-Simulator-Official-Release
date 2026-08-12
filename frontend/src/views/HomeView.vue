@@ -125,11 +125,6 @@ async function refreshPage() {
   } finally { refreshing.value = false }
 }
 
-function sessionLabel(s) {
-  if (s.level != null && s.level !== 0) return `${s.name}（${s.level_field}${s.level}）`
-  return s.name
-}
-
 // 找出与指定世界关联的存档
 function saveForWorld(worldId) {
   return sessions.value.find(s => s.world_id === worldId)
@@ -239,15 +234,33 @@ onMounted(async () => {
       </section>
 
       <!-- 继续游戏 -->
-      <div class="space-y-3">
-        <button v-if="sessions.length" @click="emit('continue')"
-          class="w-full py-3 rounded-lg border border-stone-600 text-stone-300 hover:bg-stone-800 transition">
-          继续游戏 / 读档
-        </button>
-        <p v-if="sessions.length" class="text-xs text-stone-500 text-center">
-          已有存档：{{ sessions.map(sessionLabel).join('、') }}
-        </p>
-      </div>
+      <section v-if="sessions.length" class="mb-10">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-lg font-semibold text-stone-300">✦ 继续游戏</h2>
+          <button @click="emit('continue')"
+            class="text-xs text-stone-400 hover:text-amber-300 transition">
+            📂 全部存档
+          </button>
+        </div>
+        <ul class="space-y-2">
+          <li v-for="s in sessions" :key="s.session_id"
+            class="flex items-center justify-between rounded-lg border border-stone-700 bg-stone-800/60 px-4 py-3 hover:border-amber-700/60 transition">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-stone-100 font-medium truncate">{{ s.name }}</span>
+                <span class="text-xs text-amber-300/80 shrink-0">{{ s.level_field }} {{ s.level }}</span>
+              </div>
+              <div class="text-xs text-stone-400 mt-0.5 truncate">
+                {{ s.world_name }} · {{ s.place }} · 第{{ s.turn }}回合 · {{ s.date }}
+              </div>
+            </div>
+            <button @click="continueSave(s)"
+              class="shrink-0 ml-3 px-3 py-1.5 rounded text-xs font-medium bg-amber-600 text-stone-950 hover:bg-amber-500 transition">
+              继续
+            </button>
+          </li>
+        </ul>
+      </section>
 
       <!-- 数据备份 -->
       <div class="text-center mt-6 pt-6 border-t border-stone-800">

@@ -119,9 +119,9 @@ def list_sessions(client_id: str | None = None) -> list[dict]:
             p = d / "state.json"
             if d.is_dir() and p.exists():
                 st = json.loads(p.read_text(encoding="utf-8"))
-                # 按 client_id 隔离：已标记归属的存档只对拥有者可见
+                # 按 client_id 严格隔离：未标记归属的旧存档一律不对外暴露
                 owner = st.get("meta", {}).get("client_id", "")
-                if client_id and owner and owner != client_id:
+                if client_id and owner != client_id:
                     continue
                 lf = st.get("meta", {}).get("level_field", "soul_level")
                 out.append({
