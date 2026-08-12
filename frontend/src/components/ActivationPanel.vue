@@ -138,6 +138,17 @@ const trialLeft = () => Math.max(0, entitlement.trialLimit - entitlement.trialUs
         </p>
       </div>
 
+      <!-- 防风控提示 -->
+      <p class="mb-2 rounded-md border border-amber-700/40 bg-amber-950/30 p-2.5 text-xs leading-relaxed text-amber-400">
+        ⚠️ 温馨提示：如果微信扫码提示风险、无法支付或长时间未回复，请务必使用下方【备用通道】自动获取激活码。
+      </p>
+
+      <!-- 备用通道（小红书自动发货） -->
+      <a href="http://xhslink.cn/o/7t8lsg92E0e" target="_blank" rel="noopener noreferrer"
+        class="mb-3 block text-center py-2 rounded border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 transition text-sm font-medium">
+        📕 备用通道：去小红书店铺购买 (24小时自动发货)
+      </a>
+
       <!-- 输码激活 -->
       <input v-model="code" @keyup.enter="submit" :disabled="busy"
         placeholder="粘贴激活码，如 XXXX-XXXX-XXXX"
