@@ -235,7 +235,13 @@ def _run_turn(session_id: str, player_action: str, opening: bool = False,
         msgs = build_unified_opening_messages(state, sess["archive"], tier["chars"], world)
         turn_history = base_history
     else:
-        user_msg = json.dumps({"role": "user", "content": player_action}, ensure_ascii=False)
+        # 将玩家选择的字母（如 "C"）扩展为完整选项文本，防止 AI 上下文失忆
+        expanded_action = player_action
+        for opt in sess.get("last_options", []):
+            if opt.get("label") == player_action:
+                expanded_action = f"选择了选项 {opt.get('label')}：{opt.get('text')}"
+                break
+        user_msg = json.dumps({"role": "user", "content": expanded_action}, ensure_ascii=False)
         turn_history = base_history + [user_msg]
         msgs = build_unified_messages(state, turn_history, player_action, tier["chars"], world)
 
