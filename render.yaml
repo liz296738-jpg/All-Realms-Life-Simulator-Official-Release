@@ -1,0 +1,14 @@
+# Render Blueprint — 万界人生模拟器
+# 部署方式：登录 Render → New → Blueprint Instance → 选择本仓库
+# 首次部署会提示填入 DEEPSEEK_API_KEY（sync: false 表示手动输入）
+services:
+  - type: web
+    name: douluo-life-simulator
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: DEEPSEEK_API_KEY
+        sync: false

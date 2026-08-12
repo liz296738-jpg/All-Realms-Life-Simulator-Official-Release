@@ -1,0 +1,66 @@
+{
+  "id": "gebi",
+  "name": "隔壁的租客",
+  "kind": "builtin",
+  "owner": null,
+  "desc": "现代都市慢热甜文：对门住着作息诡秘的沈砚，心动在日常烟火里慢慢发芽。",
+  "rulebook_file": "backend/prompts/gebi_system_prompt.txt",
+  "summary": "gebi",
+  "state_template": {
+    "character": {
+      "name": "无名",
+      "gender": "?",
+      "age": 25,
+      "job": "自由插画师",
+      "status": "刚结束一段三年的恋爱",
+      "traits": [],
+      "secret": "",
+      "daily": [],
+      "note": "",
+      "heart": {"init": 0, "min": 0, "max": 100, "max_step": 8}
+    },
+    "level_field": "heart",
+    "resources": {
+      "元": {"init": 800, "min": 0}
+    },
+    "stats": {
+      "灵感": {"init": 60, "min": 0, "max": 100, "max_step": 15},
+      "精力": {"init": 60, "min": 0, "max": 100, "max_step": 15},
+      "心情": {"init": 50, "min": 0, "max": 100, "max_step": 15}
+    },
+    "affection_chars": ["沈砚", "周屿", "方糖", "房东阿姨"],
+    "affection_min": -100,
+    "affection_max": 100,
+    "inventory": [],
+    "start_location": "老城区·旧居民楼顶楼",
+    "meta": {"rewind_left": 3}
+  },
+  "creation_schema": {
+    "steps": [
+      {
+        "step": "你是谁",
+        "fields": [
+          {"key": "name", "label": "姓名", "type": "text", "placeholder": "你的名字", "required": true},
+          {"key": "gender", "label": "性别", "type": "select", "options": ["女", "男"], "required": true},
+          {"key": "age", "label": "年龄", "type": "number", "min": 18, "max": 45, "default": 25}
+        ]
+      },
+      {
+        "step": "搬到顶楼之前",
+        "fields": [
+          {"key": "job", "label": "职业", "type": "select", "options": ["自由插画师", "大学生", "上班族", "甜品店主", "自由撰稿人", "待业"], "required": true},
+          {"key": "status", "label": "感情现状", "type": "select", "options": ["刚结束一段三年的恋爱", "空窗期", "想搬家换个心情", "专注事业不谈恋爱"], "required": true},
+          {"key": "traits", "label": "性格特质", "type": "multiselect", "hint": "多选用逗号分隔", "placeholder": "懒散但心软, 嘴硬心软, 慢热, 爱做饭, 强迫症, 社恐"}
+        ]
+      },
+      {
+        "step": "执念与日常",
+        "fields": [
+          {"key": "secret", "label": "执念/软肋", "type": "textarea", "rows": 2, "placeholder": "那句『你太安于现状了』、放不下的人、未完的画……"},
+          {"key": "daily", "label": "日常习惯", "type": "multiselect", "hint": "多选用逗号分隔", "placeholder": "熬夜画稿, 养多肉, 追剧, 煮粥, 半夜吃泡面, 数日子"},
+          {"key": "note", "label": "对门邻居的心里话（可选）", "type": "textarea", "rows": 2, "placeholder": "给那个总是半夜出门的邻居，想说的一句话……"}
+        ]
+      }
+    ]
+  }
+}

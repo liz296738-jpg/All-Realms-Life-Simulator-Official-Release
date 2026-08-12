@@ -1,0 +1,45 @@
+{
+  "id": "douluo",
+  "name": "魂兽大陆",
+  "kind": "builtin",
+  "owner": null,
+  "desc": "魂师与魂兽共存的开放修炼大陆文字 RPG",
+  "rulebook_file": "backend/prompts/system_prompt.txt",
+  "summary": "douluo",
+  "state_template": {
+    "character": {
+      "name": "无名",
+      "gender": "?",
+      "age": 12,
+      "wuhun": "白灵藤",
+      "wuhun_type": "植物武魂",
+      "innate_soul_power": 5,
+      "soul_level": {"init": 5, "floor_from": "innate_soul_power", "max_step": 2},
+      "talent_tier": "普通魂师档",
+      "origin": "平民",
+      "background": "",
+      "family": "",
+      "secret": "",
+      "traits": "",
+      "personality": [],
+      "desire_to_grow": 5,
+      "development_direction": "强攻系"
+    },
+    "level_field": "soul_level",
+    "resources": {
+      "gold": {"init": 10, "min": 0, "from_archive": "initial_gold"},
+      "silver": {"init": 0, "min": 0},
+      "copper": {"init": 0, "min": 0}
+    },
+    "stats": {},
+    "affection_chars": ["云昊", "苏灵儿", "楚天雄", "夜蓉", "洛青禾", "花弄影", "铁砚", "顾沧澜", "墨清歌", "雪无痕", "月婳"],
+    "affection_min": -100,
+    "affection_max": 100,
+    "factions": ["玄冥圣殿", "琉璃谷", "苍澜学院", "天衡皇朝", "曜日皇朝", "中立自由人"],
+    "inventory": [],
+    "start_location": "云溪镇",
+    "rings": {"cap_slots": [423, 764, 1760, 5000, 12000, 20000, 50000, 80000, 100000]},
+    "meta": {"rewind_left": 3}
+  },
+  "creation_schema": {}
+}

@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #app { height: 100%; }
+body {
+  font-family: 'Georgia', 'Songti SC', 'SimSun', serif;
+  background: #0c0a09;
+}
+
+/* 细滚动条 */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-thumb { background: #44403c; border-radius: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* 打字光标闪烁 */
+@keyframes caret-blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+.caret::after {
+  content: '▍';
+  color: #d6d3d1;
+  animation: caret-blink 1s step-end infinite;
+}

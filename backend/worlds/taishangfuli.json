@@ -1,0 +1,71 @@
+{
+  "id": "taishangfuli",
+  "name": "太上浮黎",
+  "kind": "builtin",
+  "owner": null,
+  "desc": "九霄界修仙正典文字 RPG：万宗林立、仙墟甲子一开、归墟渊下封印着上古魔修。你踏入太虚剑宗山门测灵根那日，正与天命少年谢尘的看云传说不期而遇。",
+  "rulebook_file": "backend/prompts/taishangfuli_system_prompt.txt",
+  "summary": "taishangfuli",
+  "state_template": {
+    "character": {
+      "name": "无名",
+      "gender": "?",
+      "age": 18,
+      "identity": "太虚剑宗外门弟子",
+      "origin": "陈塘村",
+      "root": "中品金灵根",
+      "direction": "剑修",
+      "background": "",
+      "secret": "",
+      "traits": [],
+      "personality": [],
+      "realm": {"init": 1, "min": 1, "max_step": 1}
+    },
+    "level_field": "realm",
+    "resources": {
+      "灵石": {"init": 50, "min": 0}
+    },
+    "stats": {
+      "灵力": {"init": 20, "min": 0, "max": 1000, "max_step": 30},
+      "神识": {"init": 5, "min": 0, "max": 500, "max_step": 20},
+      "体魄": {"init": 20, "min": 0, "max": 500, "max_step": 20}
+    },
+    "affection_chars": ["谢尘", "苏清月", "周寒", "柳依依", "云鹤真人", "陆长风", "凌虚子", "小青", "青鸾王", "白猿王", "玄冥老祖"],
+    "affection_min": -100,
+    "affection_max": 100,
+    "factions": ["太虚剑宗", "玄天盟", "万妖山脉", "归墟渊", "浮黎仙墟", "中立散修"],
+    "inventory": [],
+    "start_location": "太虚剑宗·山门",
+    "meta": {"rewind_left": 3}
+  },
+  "creation_schema": {
+    "steps": [
+      {
+        "step": "你是谁",
+        "fields": [
+          {"key": "name", "label": "姓名", "type": "text", "placeholder": "你的名字", "required": true},
+          {"key": "gender", "label": "性别", "type": "select", "options": ["男", "女"], "required": true},
+          {"key": "age", "label": "年龄", "type": "number", "min": 14, "max": 45, "default": 18}
+        ]
+      },
+      {
+        "step": "出身与根骨",
+        "fields": [
+          {"key": "identity", "label": "身份背景", "type": "select", "options": ["太虚剑宗外门弟子", "山村猎户", "世家子弟", "散修少年", "百草谷药童", "魔道遗孤"], "required": true},
+          {"key": "origin", "label": "出身与家境", "type": "textarea", "rows": 2, "placeholder": "陈塘村打铁匠家的儿子、被捡来的孤儿、没落的将门之后……"},
+          {"key": "root", "label": "灵根资质", "type": "select", "options": ["中品金灵根", "上品水灵根", "上品火灵根", "上品木灵根", "天品雷灵根", "杂灵根", "混沌灵根"], "required": true},
+          {"key": "direction", "label": "修炼方向", "type": "select", "options": ["剑修", "体修", "丹修", "符修"], "required": true}
+        ]
+      },
+      {
+        "step": "执念与性格",
+        "fields": [
+          {"key": "traits", "label": "天生特质", "type": "multiselect", "hint": "多选用逗号分隔", "placeholder": "风隙天资, 灵识敏锐, 心志坚定, 气运之子, 天煞孤星, 老成持重"},
+          {"key": "personality", "label": "性格基调", "type": "multiselect", "hint": "多选用逗号分隔", "placeholder": "沉静, 寡言, 温和, 执拗, 洒脱, 腹黑"},
+          {"key": "secret", "label": "执念秘密", "type": "textarea", "rows": 2, "placeholder": "那口井里的流星、走丢的人、不得不变强的理由……"},
+          {"key": "background", "label": "入门那夜（可选）", "type": "textarea", "rows": 3, "placeholder": "测灵根那天夜里，你在山门外的客栈看到了什么……"}
+        ]
+      }
+    ]
+  }
+}

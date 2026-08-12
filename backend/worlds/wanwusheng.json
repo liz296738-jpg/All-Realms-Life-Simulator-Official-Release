@@ -1,0 +1,67 @@
+{
+  "id": "wanwusheng",
+  "name": "万物生",
+  "kind": "builtin",
+  "owner": null,
+  "desc": "灵气复苏·现代都市文字 RPG：202X年7月14日，灵气突破临界，万物生灵。你从一名普通人，开启吞噬万物、逆行增熵的守门人之路。",
+  "rulebook_file": "backend/prompts/wanwusheng_system_prompt.txt",
+  "summary": "wanwusheng",
+  "state_template": {
+    "character": {
+      "name": "无名",
+      "gender": "?",
+      "age": 22,
+      "identity": "外卖员",
+      "origin": "平民",
+      "background": "",
+      "secret": "",
+      "traits": [],
+      "personality": [],
+      "realm": {"init": 1, "max_step": 1}
+    },
+    "level_field": "realm",
+    "resources": {
+      "元": {"init": 300, "min": 0}
+    },
+    "stats": {
+      "灵力": {"init": 20, "min": 0, "max": 1000, "max_step": 30},
+      "神识": {"init": 5, "min": 0, "max": 500, "max_step": 20},
+      "体魄": {"init": 20, "min": 0, "max": 500, "max_step": 20}
+    },
+    "affection_chars": ["姜夜阑", "李三思", "赵铁柱", "团子", "小狸", "心月狐", "魏无咎", "青衣怨主"],
+    "affection_min": -100,
+    "affection_max": 100,
+    "factions": ["镇灵司", "妖盟", "阴灵潮", "独行散修"],
+    "inventory": [],
+    "start_location": "锦官城",
+    "meta": {"rewind_left": 3}
+  },
+  "creation_schema": {
+    "steps": [
+      {
+        "step": "你是谁",
+        "fields": [
+          {"key": "name", "label": "姓名", "type": "text", "placeholder": "你的名字", "required": true},
+          {"key": "gender", "label": "性别", "type": "select", "options": ["男", "女"], "required": true},
+          {"key": "age", "label": "年龄", "type": "number", "min": 16, "max": 45, "default": 22}
+        ]
+      },
+      {
+        "step": "复苏前的日子",
+        "fields": [
+          {"key": "identity", "label": "复苏前职业", "type": "select", "options": ["外卖员", "大学生", "上班族", "出租车司机", "医学生", "无业游民"], "required": true},
+          {"key": "origin", "label": "出身与家境", "type": "textarea", "rows": 2, "placeholder": "单亲家庭、靠送外卖糊口……"},
+          {"key": "secret", "label": "执念秘密", "type": "textarea", "rows": 2, "placeholder": "奶奶的病、欠下的债、那个走丢的人……"}
+        ]
+      },
+      {
+        "step": "觉醒之路",
+        "fields": [
+          {"key": "traits", "label": "天生特质", "type": "multiselect", "hint": "多选用逗号分隔", "placeholder": "吞噬亲和, 通灵体质, 钢铁意志, 气运之子, 天煞孤星, 老饕"},
+          {"key": "personality", "label": "性格基调", "type": "multiselect", "hint": "多选用逗号分隔", "placeholder": "谨慎, 莽撞, 重情, 腹黑, 洒脱, 贪吃"},
+          {"key": "background", "label": "复苏前夜（可选）", "type": "textarea", "rows": 3, "placeholder": "复苏前夜你在做什么、看到了什么……"}
+        ]
+      }
+    ]
+  }
+}
