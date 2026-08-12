@@ -744,7 +744,11 @@ async def import_all(file: UploadFile = File(...), client_id: str = Form(...)):
         history = sdata.get("history", [])
         turns = sdata.get("turns", [])
         undo = sdata.get("undo", [])
-        state.setdefault("meta", {})["client_id"] = cid
+        # 强制指纹覆盖：导入存档的归属重写为当前导入者，覆盖旧指纹/无指纹，
+        # 确保导入后能通过 /api/saves 的 client_id 校验正确列出。
+        if "meta" not in state:
+            state["meta"] = {}
+        state["meta"]["client_id"] = client_id
         try:
             sm.save_state(sid, state, history)
             sm.save_turns(sid, turns, undo)
