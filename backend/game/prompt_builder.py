@@ -11,12 +11,19 @@ RULES_PATH = Path(__file__).resolve().parent.parent / "prompts" / "system_prompt
 _SYSTEM = RULES_PATH.read_text(encoding="utf-8")
 _DOULUO = worlds.get_world("douluo")  # 无 world 时的默认规则书来源
 
+# 全局反水字数铁律：追加到所有 system prompt 末尾，防止模型复读/卡死在静态环境
+_ANTI_LOOP_RULES = (
+    "【🔥 最高优先级绝对规则（防卡死与强制破局）】\n"
+    "1. 拒绝复读与水字数：绝对禁止使用“环顾四周”、“微风轻拂”、“深吸一口气”、“等待下一步行动”等无意义的静态占位废话！严禁重复上一回合已经描写过的动作、对话或场景！\n"
+    "2. 惩罚敷衍输入：如果玩家的行动指令极短或无明确意义（例如只输入“A”、“看看”、“1”、“出门”等），你绝对不能顺着环境继续静止！必须立刻强制触发一个【突发危机或事件】（例如：敌人突袭、神秘人拦截、陷阱触发、甚至直接受到伤害）来强行打破僵局！\n"
+    "3. 推动力：你的每一回合输出，都必须包含实质性的剧情推进、冲突升级或信息增量。"
+)
+
 
 def system_prompt(world: dict | None = None) -> str:
-    """规则书全文：有世界取世界 rulebook，否则魂兽大陆默认。"""
-    if isinstance(world, dict) and world.get("rulebook"):
-        return world["rulebook"]
-    return _SYSTEM
+    """规则书全文：有世界取世界 rulebook，否则魂兽大陆默认。末尾追加全局反水字数铁律。"""
+    base = world["rulebook"] if isinstance(world, dict) and world.get("rulebook") else _SYSTEM
+    return base + "\n\n" + _ANTI_LOOP_RULES
 
 
 def _world_or_douluo(world: dict | None) -> dict:
@@ -364,7 +371,11 @@ def build_unified_opening_messages(state: dict, archive: dict, chars: int | None
         "4. notes（字符串数组）：1-2 条初始线索或待办笔记，无则空数组 []。\n"
         "5. event（字符串）：如有初始事件触发则填标题，否则空字符串 \"\"。\n\n"
         "重要：narrative 是纯故事叙述，options 是独立的数据数组。因为这是 JSON 结构，"
-        "字段本身就是分离的——你不需要在 narrative 里写选项，也绝不要把选项写进 narrative。"
+        "字段本身就是分离的——你不需要在 narrative 里写选项，也绝不要把选项写进 narrative。\n\n"
+        "【⚠️ 开场强制指令（第一推力）】\n"
+        "警告：这是玩家降生在这个世界的第一个瞬间。请绝对不要描写静态的风景或平淡的日常！\n"
+        "玩家此时必须正处于一个【紧迫或充满悬念的事件】之中（例如：正在被追杀、面前正发生一场争执、正处于某场重要考核的倒计时等）。\n"
+        "请直接通过这个危机事件作为开场，强行把玩家拉入剧情漩涡，并逼迫玩家做出第一个抉择！"
     )
     msgs.append({"role": "user", "content": _append_length_hint(base, chars)})
     return msgs
