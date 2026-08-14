@@ -111,7 +111,34 @@ def test_validate_coerces_bad_field_type_to_text():
     good = good_payload()
     good["creation_schema"]["steps"][0]["fields"][0]["type"] = "checkbox"
     w = world_builder.validate_world_spec(good, "u1")
-    assert w["creation_schema"]["steps"][0]["fields"][0]["type"] == "text"
+    # 基础字段兜底会插入到第一页最前，按 key 定位 identity 字段更稳健
+    all_fields = [f for s in w["creation_schema"]["steps"] for f in s["fields"]]
+    identity = next(f for f in all_fields if f["key"] == "identity")
+    assert identity["type"] == "text"
+
+
+def test_validate_ensures_base_fields_when_missing():
+    good = good_payload()
+    # 模拟 AI 漏字段：向导只保留一个字段、character 清空
+    good["creation_schema"]["steps"] = [
+        {"step": "身份", "fields": [
+            {"key": "identity", "label": "身份", "type": "select", "options": ["穿越者"]},
+        ]},
+    ]
+    good["state_template"]["character"] = {}
+    w = world_builder.validate_world_spec(good, "u1")
+
+    keys = [f["key"] for s in w["creation_schema"]["steps"] for f in s["fields"]]
+    for k in ("name", "gender", "age", "custom_setting"):
+        assert k in keys, f"缺少基础字段 {k}"
+    # 第一页以 name 开头
+    assert w["creation_schema"]["steps"][0]["fields"][0]["key"] == "name"
+    # gender 是下拉且选项正确
+    gender = next(f for f in w["creation_schema"]["steps"][0]["fields"] if f["key"] == "gender")
+    assert gender["type"] == "select" and gender["options"] == ["男", "女", "神秘"]
+    # character 同步补齐四键
+    ch = w["state_template"]["character"]
+    assert ch["name"] == "无名" and ch["gender"] == "?" and ch["age"] == 0 and ch["custom_setting"] == ""
 
 
 def test_build_world_success(monkeypatch):

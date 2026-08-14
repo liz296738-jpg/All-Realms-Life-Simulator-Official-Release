@@ -37,7 +37,7 @@ BUILD_PROMPT = """你是「世界观建构师」。用户提供一本小说的�
     "start_location": "开局地点"
   },
   "creation_schema": {
-    "steps": [{"step": "身份", "fields": [{"key": "identity", "label": "你的身份", "type": "select", "options": ["穿越者", "正典角色", "原创角色"], "required": true}, {"key": "identityNote", "label": "具体身份说明", "type": "text", "required": false}]}, {"step": "背景", "fields": [...]}]
+    "steps": [{"step": "身份", "fields": [{"key": "name", "label": "姓名", "type": "text", "required": true}, {"key": "gender", "label": "性别", "type": "select", "options": ["男", "女", "神秘"], "required": true}, {"key": "age", "label": "年龄", "type": "number", "required": false}, {"key": "identity", "label": "你的身份", "type": "select", "options": ["穿越者", "正典角色", "原创角色"], "required": true}]}, {"step": "背景", "fields": [{"key": "custom_setting", "label": "自定义附加设定", "type": "textarea", "required": false}, ...]}]
   }
 }
 
@@ -57,8 +57,14 @@ BUILD_PROMPT = """你是「世界观建构师」。用户提供一本小说的�
 3. 严禁逐字复制小说原文或大段改写原文剧情——只提炼世界观框架、设定与规则。引用具体设定时用概括性语言。
 
 4. creation_schema 的字段类型只能是 text / number / select / multiselect / textarea。至少 2 个步骤，字段总数 4~8 个。字段 key 用英文小写下划线，label 用中文。
+   【绝对约束·基础字段必填】creation_schema 的「第一个步骤」必须以这三个字段开头（缺一不可，否则玩家创角会显示"无名"、"?"）：
+     - {"key": "name", "label": "姓名", "type": "text", "required": true}
+     - {"key": "gender", "label": "性别", "type": "select", "options": ["男", "女", "神秘"], "required": true}
+     - {"key": "age", "label": "年龄", "type": "number", "required": false}
+   并且必须在任意一个步骤中包含这个字段（供玩家填写自定义附加设定）：
+     - {"key": "custom_setting", "label": "自定义附加设定", "type": "textarea", "required": false}
 
-5. state_template.character 里每个字段给一个合理的标量默认值（数字给 0，文本给空串，列表给空数组）。"""
+5. state_template.character 里每个字段给一个合理的标量默认值（数字给 0，文本给空串，列表给空数组）。【绝对约束】state_template.character 必须同步包含 name、gender、age、custom_setting 这四个键，默认值分别为 "无名"、"?"、0、""。"""
 
 
 def _friendly_build_error(e: Exception) -> str:
@@ -69,6 +75,36 @@ def _friendly_build_error(e: Exception) -> str:
     if status == 429 or code in ("insufficient_quota", "rate_limit_exceeded"):
         return "你的 DeepSeek 额度不足或触发限流。请检查余额（platform.deepseek.com → 用量信息）后稍后再试。"
     return f"建世界失败：{e}"
+
+
+# ── 物理兜底：创角向导必须始终包含的通用基础字段，防 AI 幻觉漏字段（漏了会显示"无名"/"?"）──
+_BASE_FIELDS = [
+    {"key": "name", "label": "姓名", "type": "text", "required": True},
+    {"key": "gender", "label": "性别", "type": "select", "options": ["男", "女", "神秘"], "required": True},
+    {"key": "age", "label": "年龄", "type": "number", "required": False},
+]
+_CUSTOM_SETTING_FIELD = {"key": "custom_setting", "label": "自定义附加设定", "type": "textarea", "required": False}
+_CHARACTER_DEFAULTS = {"name": "无名", "gender": "?", "age": 0, "custom_setting": ""}
+
+
+def _ensure_base_fields(cs: dict, character: dict) -> None:
+    """硬编码合并逻辑：补齐 name/gender/age/custom_setting，防止 AI 漏生成。"""
+    existing = {f.get("key") for step in cs["steps"] for f in step.get("fields", [])}
+
+    # 1) 基础三字段缺失则 insert 到第一页最前（reversed 保证最终顺序 name→gender→age）
+    first_fields = cs["steps"][0].setdefault("fields", [])
+    for base in reversed(_BASE_FIELDS):
+        if base["key"] not in existing:
+            first_fields.insert(0, dict(base))
+            existing.add(base["key"])
+
+    # 2) custom_setting 缺失则 append 到最后一页
+    if "custom_setting" not in existing:
+        cs["steps"][-1].setdefault("fields", []).append(dict(_CUSTOM_SETTING_FIELD))
+
+    # 3) character 同步补齐四键默认值
+    for k, v in _CHARACTER_DEFAULTS.items():
+        character.setdefault(k, v)
 
 
 def validate_world_spec(data: dict, client_id: str) -> dict:
@@ -103,6 +139,9 @@ def validate_world_spec(data: dict, client_id: str) -> dict:
                 f["options"] = []
             if f["type"] in ("select", "multiselect") and not f.get("options"):
                 raise ValueError("下拉/多选字段缺少选项")
+
+    # 物理兜底：补齐 name/gender/age/custom_setting（提示词之外的代码级保险）
+    _ensure_base_fields(cs, st["character"])
 
     level_field = str(st.get("level_field", "")).strip()
     if level_field and level_field not in st.get("stats", {}):
