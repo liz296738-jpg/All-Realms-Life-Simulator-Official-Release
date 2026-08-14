@@ -9,7 +9,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 import main
+from api import routes
 from game import save_manager as sm
+from game import session_manager
 from game import world_builder
 from game import worlds
 
@@ -41,7 +43,7 @@ def client(monkeypatch, tmp_path):
     monkeypatch.setattr(sm, "ACTIVATIONS_PATH", tmp_path / "activations.json")
     monkeypatch.setattr(worlds, "CUSTOM_DIR", tmp_path / "custom_worlds")
     worlds._invalidate()
-    main._SESSIONS.clear()
+    session_manager._SESSIONS.clear()
     return TestClient(main.app)
 
 
@@ -81,7 +83,7 @@ def test_new_game_with_own_custom_world_roundtrip(client, monkeypatch):
             "event": "",
         }
 
-    monkeypatch.setattr(main, "_call_turn", fake_call_turn)
+    monkeypatch.setattr(routes, "_call_turn", fake_call_turn)
 
     r = client.post("/api/new-game", json={
         "world_id": "abc123", "session_id": "cw1",
@@ -107,7 +109,7 @@ def test_douluo_default_when_no_world_id(client, monkeypatch):
             "event": "",
         }
 
-    monkeypatch.setattr(main, "_call_turn", fake_call_turn)
+    monkeypatch.setattr(routes, "_call_turn", fake_call_turn)
     r = client.post("/api/new-game", json={
         "session_id": "dl1", "archive": {"character": {"name": "云昊", "innate_soul_power": 5}},
     })

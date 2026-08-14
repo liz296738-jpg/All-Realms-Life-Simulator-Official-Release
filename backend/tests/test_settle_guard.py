@@ -15,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import pytest
 
-import main
+from llm import deepseek_client
 from game import worlds
 from game.prompt_builder import build_settle_messages
 from game.state_schema import default_state
@@ -43,7 +43,7 @@ def _fake_client(contents):
 
 def _patch_client(monkeypatch, contents):
     client, calls = _fake_client(contents)
-    monkeypatch.setattr(main, "_client_for", lambda api_key: client)
+    monkeypatch.setattr(deepseek_client, "_client_for", lambda api_key: client)
     return calls
 
 
@@ -70,7 +70,7 @@ def _settle_msgs():
 def test_settle_returns_immediately_when_valid(monkeypatch):
     """一次成功：合法 JSON 且带 options → 不重试。"""
     calls = _patch_client(monkeypatch, [_OPTIONS_JSON, "unused"])
-    result = main._call_settle(_settle_msgs(), api_key="sk-test")
+    result = deepseek_client._call_settle(_settle_msgs(), api_key="sk-test")
     assert calls["n"] == 1
     assert len(result["options"]) == 2
 
@@ -78,7 +78,7 @@ def test_settle_returns_immediately_when_valid(monkeypatch):
 def test_settle_retries_when_options_missing(monkeypatch):
     """合法 JSON 缺 options → 带纠偏重试一次，第二次带 options 则采用。"""
     calls = _patch_client(monkeypatch, [_NO_OPTIONS_JSON, _OPTIONS_JSON])
-    result = main._call_settle(_settle_msgs(), api_key="sk-test")
+    result = deepseek_client._call_settle(_settle_msgs(), api_key="sk-test")
     assert calls["n"] == 2                       # 触发重试
     assert len(result["options"]) == 2           # 用第二次的结果
 
@@ -86,7 +86,7 @@ def test_settle_retries_when_options_missing(monkeypatch):
 def test_settle_retries_when_json_truncated(monkeypatch):
     """截断成非法 JSON → 带纠偏重试一次，第二次正常则恢复。"""
     calls = _patch_client(monkeypatch, [_TRUNCATED_JSON, _OPTIONS_JSON])
-    result = main._call_settle(_settle_msgs(), api_key="sk-test")
+    result = deepseek_client._call_settle(_settle_msgs(), api_key="sk-test")
     assert calls["n"] == 2
     assert len(result["options"]) == 2
 
@@ -94,7 +94,7 @@ def test_settle_retries_when_json_truncated(monkeypatch):
 def test_settle_falls_back_empty_on_double_failure(monkeypatch):
     """两次都失败 → 兜底 {}（由 _normalize_options 兜底单选项，不崩）。"""
     calls = _patch_client(monkeypatch, [_TRUNCATED_JSON, _TRUNCATED_JSON])
-    result = main._call_settle(_settle_msgs(), api_key="sk-test")
+    result = deepseek_client._call_settle(_settle_msgs(), api_key="sk-test")
     assert calls["n"] == 2
     assert result == {}
 
@@ -115,8 +115,8 @@ def test_settle_retry_appends_correction_nudge(monkeypatch):
 
     client = Mock()
     client.chat.completions.create.side_effect = _create
-    monkeypatch.setattr(main, "_client_for", lambda api_key: client)
-    main._call_settle(_settle_msgs(), api_key="sk-test")
+    monkeypatch.setattr(deepseek_client, "_client_for", lambda api_key: client)
+    deepseek_client._call_settle(_settle_msgs(), api_key="sk-test")
 
     assert "options 字段不可缺少" in seen_msgs["last_user"]
     assert seen_msgs["last_user"].count("options 字段不可缺少") == 1  # 只纠偏一次
@@ -125,7 +125,7 @@ def test_settle_retry_appends_correction_nudge(monkeypatch):
 # ── token 预算与提示词契约 ─────────────────────────────────────
 def test_settle_max_tokens_gives_headroom():
     """回归护栏：结算 token 预算必须留足余量，防止截断再触发。"""
-    assert main.SETTLE_MAX_TOKENS >= 1000
+    assert deepseek_client.SETTLE_MAX_TOKENS >= 1000
 
 
 def test_build_settle_messages_options_mandatory_overrides_rulebook():

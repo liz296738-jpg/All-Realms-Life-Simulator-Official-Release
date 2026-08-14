@@ -9,7 +9,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 import main
+from api import routes
 from game import save_manager as sm
+from game import session_manager
 from game.prompt_builder import build_narrative_messages, build_opening_messages, _history_messages
 from game.state_schema import default_state
 
@@ -19,14 +21,14 @@ def make_state():
 
 
 def test_freedom_tier_clamps():
-    assert main._freedom_tier(1)["chars"] == 200
-    assert main._freedom_tier(3)["chars"] == 1000
-    assert main._freedom_tier(5)["chars"] == 2000
-    assert main._freedom_tier(5)["max_tokens"] == 3200
+    assert routes._freedom_tier(1)["chars"] == 200
+    assert routes._freedom_tier(3)["chars"] == 1000
+    assert routes._freedom_tier(5)["chars"] == 2000
+    assert routes._freedom_tier(5)["max_tokens"] == 3200
     # 非法输入回落默认档（标准 1000 字）
-    assert main._freedom_tier(99)["chars"] == 1000
-    assert main._freedom_tier("abc")["chars"] == 1000
-    assert main._freedom_tier(None)["chars"] == 1000
+    assert routes._freedom_tier(99)["chars"] == 1000
+    assert routes._freedom_tier("abc")["chars"] == 1000
+    assert routes._freedom_tier(None)["chars"] == 1000
 
 
 def test_narrative_length_hint_present_and_optional():
@@ -67,7 +69,7 @@ def test_history_token_budget_truncates():
 def test_freedom_max_tokens_passed_through(monkeypatch, tmp_path):
     monkeypatch.setattr(sm, "SAVES_DIR", tmp_path)
     monkeypatch.setattr(sm, "ACTIVATIONS_PATH", tmp_path / "activations.json")
-    main._SESSIONS.clear()
+    session_manager._SESSIONS.clear()
     seen = {}
 
     def record_call_turn(messages, api_key=None, max_tokens=2800):
@@ -80,7 +82,7 @@ def test_freedom_max_tokens_passed_through(monkeypatch, tmp_path):
             "event": "",
         }
 
-    monkeypatch.setattr(main, "_call_turn", record_call_turn)
+    monkeypatch.setattr(routes, "_call_turn", record_call_turn)
     c = TestClient(main.app)
 
     # new-game freedom=5 → 3200 + 1200 = 4400 unified max_tokens

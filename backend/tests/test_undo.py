@@ -13,7 +13,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 import main
+from api import routes
 from game import save_manager as sm
+from game import session_manager
 
 
 def _fake_call_turn(messages, api_key=None, max_tokens=2800):
@@ -30,8 +32,8 @@ def _fake_call_turn(messages, api_key=None, max_tokens=2800):
 def client(monkeypatch, tmp_path):
     monkeypatch.setattr(sm, "SAVES_DIR", tmp_path)
     monkeypatch.setattr(sm, "ACTIVATIONS_PATH", tmp_path / "activations.json")
-    main._SESSIONS.clear()
-    monkeypatch.setattr(main, "_call_turn", _fake_call_turn)
+    session_manager._SESSIONS.clear()
+    monkeypatch.setattr(routes, "_call_turn", _fake_call_turn)
     return TestClient(main.app)
 
 
@@ -65,7 +67,7 @@ def _act(c, sid, action):
 
 def test_options_normalize_recommended():
     """结算选项规范化：AI 标了推荐则保留；没标则默认第一个；空则兜底单个。"""
-    from main import _normalize_options
+    from api.routes import _normalize_options
 
     # AI 已标推荐 → 原样保留
     out = _normalize_options([
@@ -86,7 +88,7 @@ def test_options_normalize_recommended():
 
 def test_options_normalize_missing_label():
     """label 缺失按 ABCD 顺序补全。"""
-    from main import _normalize_options
+    from api.routes import _normalize_options
     out = _normalize_options([{"text": "a"}, {"text": "b"}])
     assert [o["label"] for o in out] == ["A", "B"]
 
@@ -159,7 +161,7 @@ def test_cold_start_restores_turns_and_undo(client):
     _new_game(client)
     _act(client, "t1", "行动")
     # 模拟服务重启：清空内存会话，从磁盘恢复
-    main._SESSIONS.clear()
+    session_manager._SESSIONS.clear()
     r = client.post("/api/resume", json={"session_id": "t1"})
     data = r.json()
     assert len(data["turns"]) == 2
@@ -177,7 +179,7 @@ def test_cold_start_state_is_fresh(client):
     d1 = _act(client, "t1", "赚钱")
     assert d1["state"]["resources"]["gold"] == gold0 + 10
 
-    main._SESSIONS.clear()  # 模拟重启
+    session_manager._SESSIONS.clear()  # 模拟重启
     r = client.post("/api/resume", json={"session_id": "t1"})
     data = r.json()
     assert data["state"]["meta"]["turn"] == turn0 + 1
@@ -192,7 +194,7 @@ def test_load_persists_state_to_disk(client):
     _act(client, "t1", "再行动")  # turn 3
     client.post("/api/load", json={"savepoint_id": sp["id"]})  # 回到 turn 2
 
-    main._SESSIONS.clear()
+    session_manager._SESSIONS.clear()
     data = client.post("/api/resume", json={"session_id": "t1"}).json()
     assert data["state"]["meta"]["turn"] == 2
 
@@ -202,7 +204,7 @@ def test_stream_error_yields_error_event(client, monkeypatch):
     def boom(messages, api_key=None, max_tokens=2800):
         raise RuntimeError("boom")
 
-    monkeypatch.setattr(main, "_call_turn", boom)
+    monkeypatch.setattr(routes, "_call_turn", boom)
     resp = client.post("/api/new-game", json={
         "archive": {"character": {"name": "E", "innate_soul_power": 5, "origin": "平民"}},
         "session_id": "e1",

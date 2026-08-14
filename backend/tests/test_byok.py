@@ -1,7 +1,12 @@
 """BYOK：玩家自带 DeepSeek API Key 相关单元测试。"""
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 import pytest
 
-from main import _client, _client_for, _friendly_err
+from llm.deepseek_client import _client, _client_for, _friendly_err
 
 
 class _E401:
@@ -15,9 +20,8 @@ class _E429:
 
 
 def test_client_for_none_falls_back_to_server_client():
-    c = _client_for(None)
     if _client is not None:
-        assert c is _client
+        assert _client_for(None) is _client
     else:
         with pytest.raises(RuntimeError):
             _client_for(None)
@@ -31,9 +35,8 @@ def test_client_for_player_key_creates_separate_client():
 
 
 def test_client_for_blank_key_falls_back():
-    c = _client_for("   ")
     if _client is not None:
-        assert c is _client
+        assert _client_for("   ") is _client
     else:
         with pytest.raises(RuntimeError):
             _client_for("   ")

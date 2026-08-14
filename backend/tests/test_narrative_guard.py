@@ -13,14 +13,16 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import pytest
 
-import main
+from api import routes
 from game import save_manager as sm
+from game import session_manager
 from game import worlds
 from game.prompt_builder import (
     build_unified_messages,
     build_unified_opening_messages,
 )
 from game.state_schema import default_state
+from llm import deepseek_client
 
 _PROSE = ("晨光穿过青云宗大殿的窗棂，落在一个白发老者的肩头。他看着林晚，缓缓开口："
           "\"你终于来了。天澜秘境的钥匙，在你身上吧。\"林晚握紧怀中的半块玉牌，点了点头。")
@@ -69,25 +71,24 @@ def _fake_turn_short_narrative(messages, api_key=None, max_tokens=2800):
 
 
 @pytest.fixture()
-def M(monkeypatch, tmp_path):
-    """隔离真实数据：临时数据目录 + 固定 unified 调用替换。"""
+def setup(monkeypatch, tmp_path):
+    """隔离真实数据：临时数据目录 + 清空内存会话。"""
     monkeypatch.setattr(sm, "SAVES_DIR", tmp_path)
     monkeypatch.setattr(sm, "ACTIVATIONS_PATH", tmp_path / "activations.json")
-    main._SESSIONS.clear()
-    return main
+    session_manager._SESSIONS.clear()
 
 
-def _new_session(M, sid="s1"):
+def _new_session(sid="s1"):
     world = worlds.get_world("douluo")
     state = default_state(_ARCHIVE, world)
-    M._SESSIONS[sid] = M._new_session(state, [], _ARCHIVE)
+    session_manager._new_session(sid, state, [], _ARCHIVE)
     return state
 
 
-def _run_turn_sse(M, sid="s1", action="去藏经阁查玉牌线索", opening=False):
+def _run_turn_sse(sid="s1", action="去藏经阁查玉牌线索", opening=False):
     """驱动 _run_turn，收集全部 SSE 事件，返回 (narrative, options, error)。"""
-    gen = M._run_turn(sid, action, opening=opening, api_key="sk-test",
-                      freedom=3, client_id="test")
+    gen = routes._run_turn(sid, action, opening=opening, api_key="sk-test",
+                           freedom=3, client_id="test")
     texts, delta, error = [], None, None
     for ev in gen:
         evt = ev.split("\n", 1)[0].replace("event: ", "")
@@ -106,36 +107,36 @@ def _run_turn_sse(M, sid="s1", action="去藏经阁查玉牌线索", opening=Fal
 
 # ── 正常流程 ─────────────────────────────────────
 
-def test_normal_turn_produces_narrative_and_options(M, monkeypatch):
+def test_normal_turn_produces_narrative_and_options(setup, monkeypatch):
     """正常 JSON 返回 → narrative 逐段推送 + delta 包含 options + 落盘。"""
-    monkeypatch.setattr(M, "_call_turn", _fake_turn_ok)
-    _new_session(M)
+    monkeypatch.setattr(routes, "_call_turn", _fake_turn_ok)
+    _new_session()
 
-    narrative, options, error = _run_turn_sse(M, opening=True)
+    narrative, options, error = _run_turn_sse(opening=True)
 
     assert error is None
     assert _PROSE in narrative                  # narrative 被逐段 SSE 推送
     assert len(options) == 2
     assert options[0]["label"] == "A"
     # 落盘验证
-    sess = M._SESSIONS["s1"]
+    sess = session_manager._load_session("s1")
     assert json.loads(sess["history"][-1])["content"] == _PROSE
     assert sess["turns"][-1]["narrative"] == _PROSE
     assert sess["turns"][-1]["notes"] == ["一条测试笔记"]
     assert sess["turns"][-1]["event"] == "测试事件"
 
 
-def test_normal_turn_non_opening(M, monkeypatch):
+def test_normal_turn_non_opening(setup, monkeypatch):
     """非开场回合同样正常产出。"""
-    monkeypatch.setattr(M, "_call_turn", _fake_turn_ok)
-    state = _new_session(M)
+    monkeypatch.setattr(routes, "_call_turn", _fake_turn_ok)
+    _new_session()
     # 给一个已存在的 history 模拟非开场场景
-    M._SESSIONS["s1"]["history"] = [
+    session_manager._load_session("s1")["history"] = [
         json.dumps({"role": "user", "content": "去修炼"}),
         json.dumps({"role": "assistant", "content": "你走向修炼场。"}),
     ]
 
-    narrative, options, error = _run_turn_sse(M, opening=False)
+    narrative, options, error = _run_turn_sse(opening=False)
 
     assert error is None
     assert len(options) == 2
@@ -144,12 +145,12 @@ def test_normal_turn_non_opening(M, monkeypatch):
 
 # ── 退化/fallback ────────────────────────────────
 
-def test_empty_response_uses_fallback(M, monkeypatch):
+def test_empty_response_uses_fallback(setup, monkeypatch):
     """_call_turn 返回 {} → 模板叙述 + 默认选项，不崩溃。"""
-    monkeypatch.setattr(M, "_call_turn", _fake_turn_empty)
-    _new_session(M)
+    monkeypatch.setattr(routes, "_call_turn", _fake_turn_empty)
+    _new_session()
 
-    narrative, options, error = _run_turn_sse(M, opening=True)
+    narrative, options, error = _run_turn_sse(opening=True)
 
     assert error is None
     assert "环顾四周" in narrative              # fallback 模板
@@ -157,23 +158,23 @@ def test_empty_response_uses_fallback(M, monkeypatch):
     assert options[0]["text"] == "继续前行"
 
 
-def test_short_narrative_uses_fallback(M, monkeypatch):
+def test_short_narrative_uses_fallback(setup, monkeypatch):
     """narrative 过短（"。"→ < 30 chars）→ fallback 模板。"""
-    monkeypatch.setattr(M, "_call_turn", _fake_turn_short_narrative)
-    _new_session(M)
+    monkeypatch.setattr(routes, "_call_turn", _fake_turn_short_narrative)
+    _new_session()
 
-    narrative, options, error = _run_turn_sse(M, opening=True)
+    narrative, options, error = _run_turn_sse(opening=True)
 
     assert error is None
     assert "环顾四周" in narrative              # fallback 覆盖了短 narrative
 
 
-def test_missing_options_gets_default(M, monkeypatch):
+def test_missing_options_gets_default(setup, monkeypatch):
     """合法 JSON 但缺 options → _normalize_options 返回兜底单选项。"""
-    monkeypatch.setattr(M, "_call_turn", _fake_turn_no_options)
-    _new_session(M)
+    monkeypatch.setattr(routes, "_call_turn", _fake_turn_no_options)
+    _new_session()
 
-    narrative, options, error = _run_turn_sse(M, opening=True)
+    narrative, options, error = _run_turn_sse(opening=True)
 
     assert error is None
     assert _PROSE in narrative                  # narrative 正常
@@ -232,7 +233,7 @@ class _FakeClient:
         self.chat = type("chat", (), {"completions": _FakeCompletions(create_fn)})()
 
 
-def test_call_turn_retries_on_empty_narrative(M, monkeypatch):
+def test_call_turn_retries_on_empty_narrative(setup, monkeypatch):
     """_call_turn：narrative 为空 → 重试 1 次。"""
     calls = {"n": 0}
 
@@ -251,13 +252,13 @@ def test_call_turn_retries_on_empty_narrative(M, monkeypatch):
             }, ensure_ascii=False)
         return _make_resp(content)
 
-    monkeypatch.setattr(M, "_client_for", lambda api_key=None: _FakeClient(fake_create))
-    result = M._call_turn([{"role": "user", "content": "test"}], api_key="sk-test")
+    monkeypatch.setattr(deepseek_client, "_client_for", lambda api_key=None: _FakeClient(fake_create))
+    result = deepseek_client._call_turn([{"role": "user", "content": "test"}], api_key="sk-test")
     assert calls["n"] == 2
     assert result["narrative"] == _PROSE
 
 
-def test_call_turn_retries_on_missing_options(M, monkeypatch):
+def test_call_turn_retries_on_missing_options(setup, monkeypatch):
     """_call_turn：缺 options → 重试 1 次。"""
     calls = {"n": 0}
 
@@ -276,13 +277,13 @@ def test_call_turn_retries_on_missing_options(M, monkeypatch):
             }, ensure_ascii=False)
         return _make_resp(content)
 
-    monkeypatch.setattr(M, "_client_for", lambda api_key=None: _FakeClient(fake_create))
-    result = M._call_turn([{"role": "user", "content": "test"}], api_key="sk-test")
+    monkeypatch.setattr(deepseek_client, "_client_for", lambda api_key=None: _FakeClient(fake_create))
+    result = deepseek_client._call_turn([{"role": "user", "content": "test"}], api_key="sk-test")
     assert calls["n"] == 2
     assert len(result["options"]) == 2
 
 
-def test_call_turn_returns_empty_on_total_failure(M, monkeypatch):
+def test_call_turn_returns_empty_on_total_failure(setup, monkeypatch):
     """_call_turn：两次都返回无效 JSON → 返回 {}。"""
     calls = {"n": 0}
 
@@ -290,8 +291,8 @@ def test_call_turn_returns_empty_on_total_failure(M, monkeypatch):
         calls["n"] += 1
         return _make_resp("not valid json at all {{{")
 
-    monkeypatch.setattr(M, "_client_for", lambda api_key=None: _FakeClient(fake_create))
-    result = M._call_turn([{"role": "user", "content": "test"}], api_key="sk-test")
+    monkeypatch.setattr(deepseek_client, "_client_for", lambda api_key=None: _FakeClient(fake_create))
+    result = deepseek_client._call_turn([{"role": "user", "content": "test"}], api_key="sk-test")
     assert calls["n"] == 2
     assert result == {}
 

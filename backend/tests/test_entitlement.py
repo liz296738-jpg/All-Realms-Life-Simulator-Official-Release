@@ -19,8 +19,11 @@ import pytest
 from fastapi.testclient import TestClient
 
 import main
+from api import routes
+from auth import subscription
 from game import activation_codes
 from game import save_manager as sm
+from game import session_manager
 
 
 def _fake_call_turn(messages, api_key=None, max_tokens=2800):
@@ -56,7 +59,7 @@ def _code(days: int) -> str:
 
 def _expiry_end(days: int) -> str:
     """_code(days) 对应到期日 23:59:59 的 iso（对应日 + SUB_DAYS，与 _verify_code 一致）。"""
-    expiry = date.today() + timedelta(days=days) + timedelta(days=main.SUB_DAYS)
+    expiry = date.today() + timedelta(days=days) + timedelta(days=subscription.SUB_DAYS)
     return (datetime.combine(expiry, datetime.min.time()) + timedelta(days=1) - timedelta(seconds=1)).isoformat()
 
 
@@ -66,8 +69,8 @@ def client(monkeypatch, tmp_path):
     monkeypatch.setattr(sm, "ACTIVATIONS_PATH", tmp_path / "activations.json")
     monkeypatch.setattr(activation_codes, "CODES_PATH", tmp_path / "activation_codes.json")
     activation_codes.save_codes(_seed_codes())
-    main._SESSIONS.clear()
-    monkeypatch.setattr(main, "_call_turn", _fake_call_turn)
+    session_manager._SESSIONS.clear()
+    monkeypatch.setattr(routes, "_call_turn", _fake_call_turn)
     return TestClient(main.app)
 
 
@@ -106,7 +109,7 @@ def test_registry_roundtrip_and_verify_today(client):
     """码池可查：今天的码 → 今天校验通过，到期 = 今天 + SUB_DAYS 23:59:59。"""
     c = _code(0)
     assert activation_codes.find_day_by_code(c) == date.today().strftime("%m-%d")
-    ok, until, err = main._verify_code(c)
+    ok, until, err = subscription._verify_code(c)
     assert ok is True
     assert until == _expiry_end(0)
     assert err is None
@@ -115,26 +118,26 @@ def test_registry_roundtrip_and_verify_today(client):
 def test_verify_is_case_and_dash_insensitive(client):
     c = _code(0).lower()
     messy = f"{c[:4]} -{c[4:8]} {c[8:]}\t"
-    ok, until, _ = main._verify_code(messy)
+    ok, until, _ = subscription._verify_code(messy)
     assert ok is True
     assert until == _expiry_end(0)
 
 
 def test_verify_invalid_code(client):
-    ok, _, err = main._verify_code("XXXX-1234-AAAA")
+    ok, _, err = subscription._verify_code("XXXX-1234-AAAA")
     assert ok is False
     assert err and "无效" in err
 
 
 def test_verify_future_code_rejected_today(client):
-    ok, _, err = main._verify_code(_code(1))   # 明天的码今天不能激活
+    ok, _, err = subscription._verify_code(_code(1))   # 明天的码今天不能激活
     assert ok is False
     assert err and "激活码错误或已过期" in err
 
 
 def test_wrong_date_error_does_not_leak_code_date(client):
     """非当天激活的提示不得泄露码对应的日期（隐私）：只说"码不对"。"""
-    ok, _, err = main._verify_code(_code(1))   # 明天的码今天不能激活
+    ok, _, err = subscription._verify_code(_code(1))   # 明天的码今天不能激活
     assert ok is False
     assert err
     assert not re.search(r"\d+月\d+号", err)   # 不告诉玩家这个码是哪天的
@@ -154,36 +157,36 @@ def test_today_follows_beijing_not_utc(monkeypatch, tmp_path):
     activation_codes.save_codes({"07-05": "CN-0505-OLD", "08-10": "CN-1010-CODE", "08-11": "CN-1111-CODE"})
     # 服务器系统时刻（UTC）= 2026-08-10 16:30；同一时刻北京 = 2026-08-11 00:30
     bj_now = datetime(2026, 8, 11, 0, 30)
-    monkeypatch.setattr(main, "_cn_now", lambda: bj_now)
+    monkeypatch.setattr(subscription, "_cn_now", lambda: bj_now)
 
     # 今天的码：窗口从今天开始 → 激活成功
-    ok, until, _ = main._verify_code("CN-1111-CODE")
+    ok, until, _ = subscription._verify_code("CN-1111-CODE")
     assert ok is True
     assert until is not None
-    exp_day = (datetime(2026, 8, 11) + timedelta(days=main.SUB_DAYS)).strftime("%Y-%m-%d")
+    exp_day = (datetime(2026, 8, 11) + timedelta(days=subscription.SUB_DAYS)).strftime("%Y-%m-%d")
     assert until.startswith(exp_day)   # 到期日锚定码日期 08-11 + 30 = 09-10
 
     # 昨天的码：仍在 30 天窗口内 → 激活成功，到期日锚定码日期（08-10 + 30 = 09-09）
-    ok2, until2, _ = main._verify_code("CN-1010-CODE")
+    ok2, until2, _ = subscription._verify_code("CN-1010-CODE")
     assert ok2 is True
     assert until2 is not None
-    exp_day2 = (datetime(2026, 8, 10) + timedelta(days=main.SUB_DAYS)).strftime("%Y-%m-%d")
+    exp_day2 = (datetime(2026, 8, 10) + timedelta(days=subscription.SUB_DAYS)).strftime("%Y-%m-%d")
     assert until2.startswith(exp_day2)
 
     # 31 天前的码（07-05）：在 30 天窗口之外 → 拒绝
-    ok3, _, _ = main._verify_code("CN-0505-OLD")
+    ok3, _, _ = subscription._verify_code("CN-0505-OLD")
     assert ok3 is False
 
 
 def test_verify_code_outside_window_rejected(client):
-    ok, _, err = main._verify_code(_code(-31))  # 31 天前的码，在 30 天窗口之外
+    ok, _, err = subscription._verify_code(_code(-31))  # 31 天前的码，在 30 天窗口之外
     assert ok is False
     assert err
 
 
 def test_verify_past_code_within_window_succeeds(client):
     """昨天的码在 30 天窗口内 → 激活成功，到期锚定码日期而非今天。"""
-    ok, until, err = main._verify_code(_code(-1))
+    ok, until, err = subscription._verify_code(_code(-1))
     assert ok is True
     assert err is None
     # 到期 = 码日期 + 30，即 (today-1) + 30 = today+29
@@ -192,9 +195,9 @@ def test_verify_past_code_within_window_succeeds(client):
 
 def test_verify_edge_of_window(client):
     """码日期 + 30 天（窗口最后一天，含）仍可激活；码日期 + 31 天被拒。"""
-    ok_last, _, _ = main._verify_code(_code(-30))  # 30 天前 = 窗口最后一天
+    ok_last, _, _ = subscription._verify_code(_code(-30))  # 30 天前 = 窗口最后一天
     assert ok_last is True
-    ok_expired, _, _ = main._verify_code(_code(-31))  # 31 天前 = 刚好过期
+    ok_expired, _, _ = subscription._verify_code(_code(-31))  # 31 天前 = 刚好过期
     assert ok_expired is False
 
 
@@ -288,7 +291,7 @@ def test_activate_code_outside_window_rejected_400(client):
 
 # ── 试玩门禁 / 订阅行为 ─────────────────────────────
 def test_free_trial_counts_turns_and_gates(client, monkeypatch):
-    monkeypatch.setattr(main, "FREE_TRIAL_TURNS", 2)
+    monkeypatch.setattr(subscription, "FREE_TRIAL_TURNS", 2)
     _new_game(client)      # 试玩 1/2
     _act(client, "e1")     # 试玩 2/2 → 已用尽
     r = client.post("/api/act", json={"session_id": "e1", "action": "再来", "client_id": "dev"})
@@ -303,7 +306,7 @@ def test_free_trial_counts_turns_and_gates(client, monkeypatch):
 
 
 def test_new_game_blocked_when_no_trial(client, monkeypatch):
-    monkeypatch.setattr(main, "FREE_TRIAL_TURNS", 0)
+    monkeypatch.setattr(subscription, "FREE_TRIAL_TURNS", 0)
     r = client.post("/api/new-game", json={
         "archive": {"character": {"name": "X", "innate_soul_power": 5, "origin": "平民"}},
         "session_id": "z1", "client_id": "dev",
@@ -320,7 +323,7 @@ def test_new_game_blocked_when_no_trial(client, monkeypatch):
 
 
 def test_paid_user_exempt_from_trial(client, monkeypatch):
-    monkeypatch.setattr(main, "FREE_TRIAL_TURNS", 1)
+    monkeypatch.setattr(subscription, "FREE_TRIAL_TURNS", 1)
     client.post("/api/activate", json={"code": _code(0), "client_id": "dev"})
     _new_game(client)
     _act(client, "e1")   # 超过试玩上限仍放行（已激活）
@@ -330,7 +333,7 @@ def test_paid_user_exempt_from_trial(client, monkeypatch):
 
 def test_code_works_on_any_device_same_day(client, monkeypatch):
     """码对应日当天，任意设备带着同一码直接可用；不带码无试玩 → 403。"""
-    monkeypatch.setattr(main, "FREE_TRIAL_TURNS", 0)
+    monkeypatch.setattr(subscription, "FREE_TRIAL_TURNS", 0)
     c = _code(0)
     client.post("/api/activate", json={"code": c, "client_id": "dev1"})
     # dev2 从未激活，但请求带码（今天的码）→ 放行
@@ -345,7 +348,7 @@ def test_code_works_on_any_device_same_day(client, monkeypatch):
 
 def test_code_passed_in_act_body_skips_gate(client, monkeypatch):
     """带码的 act 请求直接放行，且不消耗试玩次数。"""
-    monkeypatch.setattr(main, "FREE_TRIAL_TURNS", 1)
+    monkeypatch.setattr(subscription, "FREE_TRIAL_TURNS", 1)
     c = _code(0)
     _new_game(client, sid="g1", cid="dev")   # 消耗 1 次试玩 → 已用尽
     r = client.post("/api/act", json={"session_id": "g1", "action": "带码行动", "client_id": "dev", "code": c})
@@ -400,19 +403,19 @@ def test_malformed_record_does_not_500(client):
 def test_activation_persists_across_restart(client):
     """激活成功把 paid_until 镜像写盘，服务重启（清内存）后本机仍视为已订阅。"""
     client.post("/api/activate", json={"code": _code(0), "client_id": "dev"})
-    main._SESSIONS.clear()
+    session_manager._SESSIONS.clear()
     ent = client.post("/api/entitlement", json={"client_id": "dev"}).json()
     assert ent["paid"] is True
 
 
 def test_failed_turn_does_not_consume_trial(client, monkeypatch):
     """回合生成失败（error 事件）不记试玩次数。"""
-    monkeypatch.setattr(main, "FREE_TRIAL_TURNS", 1)
+    monkeypatch.setattr(subscription, "FREE_TRIAL_TURNS", 1)
 
     def boom(messages, api_key=None, max_tokens=2800):
         raise RuntimeError("boom")
 
-    monkeypatch.setattr(main, "_call_turn", boom)
+    monkeypatch.setattr(routes, "_call_turn", boom)
     r = client.post("/api/new-game", json={
         "archive": {"character": {"name": "X", "innate_soul_power": 5, "origin": "平民"}},
         "session_id": "f1", "client_id": "dev",
