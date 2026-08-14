@@ -1,0 +1,55 @@
+{
+  "id": "shengluolan",
+  "name": "圣罗兰魔法学院",
+  "kind": "builtin",
+  "owner": null,
+  "desc": "中世纪魔法学院里的麻瓜：绝魔体质伪装入学，三个月攒学分、藏马脚，期末别被开除，也别被送上火刑架。",
+  "rulebook_file": "backend/prompts/shengluolan_system_prompt.txt",
+  "summary": "shengluolan",
+  "state_template": {
+    "character": {
+      "name": "亚瑟",
+      "gender": "男",
+      "age": 16,
+      "身份": "圣罗兰魔法学院·伪装入学的绝魔者",
+      "background": "",
+      "secret": "",
+      "traits": [],
+      "学分": {"init": 0, "min": 0, "max": 100, "max_step": 10}
+    },
+    "level_field": "学分",
+    "resources": {
+      "金币": {"init": 3, "min": 0}
+    },
+    "stats": {
+      "伪装度": {"init": 80, "min": 0, "max": 100, "max_step": 30}
+    },
+    "affection_chars": ["艾拉拉", "凡恩教授"],
+    "affection_min": -100,
+    "affection_max": 100,
+    "factions": [],
+    "inventory": ["伪造的贵族推荐信", "神秘的黑铁戒指"],
+    "start_location": "圣罗兰魔法学院·礼堂",
+    "meta": {"rewind_left": 3}
+  },
+  "creation_schema": {
+    "steps": [
+      {
+        "step": "你是谁",
+        "fields": [
+          {"key": "name", "label": "姓名", "type": "text", "placeholder": "你的名字", "required": true},
+          {"key": "gender", "label": "性别", "type": "select", "options": ["男", "女"], "required": true},
+          {"key": "age", "label": "年龄", "type": "number", "min": 14, "max": 20, "default": 16}
+        ]
+      },
+      {
+        "step": "入学之前",
+        "fields": [
+          {"key": "background", "label": "伪装入学的来路", "type": "textarea", "rows": 2, "placeholder": "那张伪造的贵族推荐信，是怎么到你手里的……"},
+          {"key": "secret", "label": "不敢被人知道的秘密", "type": "textarea", "rows": 2, "placeholder": "绝魔体质之外，更私人的秘密……"},
+          {"key": "traits", "label": "性格特质", "type": "multiselect", "hint": "多选用逗号分隔", "placeholder": "机敏, 谨慎, 嘴硬心软, 投机, 敏锐, 自卑"}
+        ]
+      }
+    ]
+  }
+}
