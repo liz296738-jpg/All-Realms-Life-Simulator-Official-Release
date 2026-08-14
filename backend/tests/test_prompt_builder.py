@@ -17,7 +17,7 @@ def make_state():
 def test_state_summary_contains_key_fields():
     s = make_state()
     summary = state_summary(s)
-    for key in ["林默", "魂力", "白灵藤", "云溪镇", "财富", "自由/综合向"]:
+    for key in ["林默", "soul_level", "白灵藤", "云溪镇", "gold", "自由/综合向"]:
         assert key in summary
 
 

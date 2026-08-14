@@ -98,6 +98,6 @@ def test_summary_shows_heart_and_cast():
     s = default_state({"character": {"name": "林栀", "gender": "女", "age": 25}}, w)
     apply_delta(s, {"affection": {"沈砚": 5}}, w)  # 好感度非零才会进入摘要
     txt = state_summary(s, w)
-    assert "心动值：0/100" in txt
-    assert "沈砚5" in txt
+    assert "heart：0" in txt
+    assert "沈砚(5)" in txt
     assert "老城区" in txt

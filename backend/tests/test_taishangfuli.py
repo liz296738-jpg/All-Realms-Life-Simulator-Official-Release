@@ -125,12 +125,12 @@ def test_money_and_inventory():
 
 
 def test_summary_shows_realm_name():
-    """专属摘要把境界数值渲染成中文境界名，而不是裸数字。"""
+    """专属摘要渲染境界字段（realm 键 + 数值），由 world spec 驱动、无硬编码中文境界名。"""
     w = worlds.get_world("taishangfuli")
     s = default_state({"character": {"name": "顾长生", "gender": "男", "age": 18,
                                      "root": "中品金灵根", "direction": "剑修"}}, w)
     txt = state_summary(s, w)
-    assert "境界：炼气" in txt
+    assert "realm：1" in txt
     assert "灵石" in txt
     assert "太虚剑宗·山门" in txt
     assert "剑修" in txt
