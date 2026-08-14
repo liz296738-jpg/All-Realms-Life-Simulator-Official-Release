@@ -1,0 +1,32 @@
+# ── Python 缓存与字节码 ──
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# ── 打包 / 构建产物 ──
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# ── 测试覆盖率 ──
+.coverage
+.coverage.*
+htmlcov/
+
+# ── 本地环境与密钥 ──
+.env
+.env.local
+.venv/
+venv/
+
+# ── 运行时数据（玩家存档 / 自建世界 / 订阅登记表，不进 git）──
+# ⚠️ 注意：backend/data/activation_codes.json（激活码池）必须保留跟踪，上面规则刻意不碰它。
+backend/data/activations.json
+backend/data/saves/
+backend/data/worlds/
