@@ -1,0 +1,79 @@
+{
+  "id": "zhenshi",
+  "name": "真实人生",
+  "kind": "builtin",
+  "owner": null,
+  "desc": "超高自由度现实人生沙盘：你不是天选之子，只是这世界里一个真实的普通人。赚钱、求学、考公、创业、恋爱、结婚、买房、躺平、移民——用一辈子活出自己的人生，没有通关，只有活着。",
+  "rulebook_file": "backend/prompts/zhenshi_system_prompt.txt",
+  "summary": "zhenshi",
+  "state_template": {
+    "character": {
+      "name": "无名",
+      "gender": "?",
+      "出生城市": "",
+      "居住城市": "",
+      "当前人生阶段": "刚毕业",
+      "学历": "本科",
+      "专业": "",
+      "家庭背景": "普通家庭",
+      "性格": [],
+      "人生目标": "",
+      "最在意": "自由",
+      "模拟风格": "现实但允许戏剧性偶然",
+      "允许现实大事件": true,
+      "年龄": {"init": 22, "min": 18, "max": 100, "max_step": 1}
+    },
+    "level_field": "年龄",
+    "resources": {
+      "现金": {"init": 20000, "min": 0, "origin_field": "家庭背景", "origin_defaults": {"普通家庭": 20000, "小康家庭": 50000, "富裕家庭": 200000, "高资产家庭": 500000}},
+      "存款": {"init": 50000, "min": 0, "origin_field": "家庭背景", "origin_defaults": {"普通家庭": 50000, "小康家庭": 200000, "富裕家庭": 1000000, "高资产家庭": 3000000}},
+      "可支配时间": {"init": 100, "min": 0}
+    },
+    "stats": {
+      "精力": {"init": 70, "min": 0, "max": 100, "max_step": 30},
+      "压力": {"init": 30, "min": 0, "max": 100, "max_step": 30},
+      "健康": {"init": 80, "min": 0, "max": 100, "max_step": 30},
+      "情绪稳定度": {"init": 70, "min": 0, "max": 100, "max_step": 30},
+      "生活满意度": {"init": 60, "min": 0, "max": 100, "max_step": 10}
+    },
+    "affection_chars": [],
+    "affection_min": -100,
+    "affection_max": 100,
+    "factions": [],
+    "inventory": [],
+    "start_location": "中国·某城市",
+    "meta": {"rewind_left": 3}
+  },
+  "creation_schema": {
+    "steps": [
+      {
+        "step": "你是谁",
+        "fields": [
+          {"key": "name", "label": "姓名", "type": "text", "placeholder": "你的名字", "required": true},
+          {"key": "gender", "label": "性别", "type": "select", "options": ["男", "女", "自定义"], "required": true},
+          {"key": "居住城市", "label": "当前居住城市", "type": "text", "placeholder": "如：成都 / 上海 / 纽约"},
+          {"key": "出生城市", "label": "出生城市", "type": "text", "placeholder": "如：某三线小城 / 杭州"}
+        ]
+      },
+      {
+        "step": "人生起点",
+        "fields": [
+          {"key": "当前人生阶段", "label": "当前人生阶段", "type": "select", "options": ["高中", "大学", "研究生", "刚毕业", "职场", "创业", "自由职业", "暂时无业"], "required": true},
+          {"key": "学历", "label": "学历", "type": "select", "options": ["高中", "大专", "本科", "硕士", "博士", "其他"], "required": true},
+          {"key": "专业", "label": "专业 / 技能", "type": "text", "placeholder": "如：计算机、医学、文学、无"},
+          {"key": "家庭背景", "label": "家庭背景", "type": "select", "options": ["普通家庭", "小康家庭", "富裕家庭", "高资产家庭"], "required": true, "hint": "决定你的初始现金与存款"}
+        ]
+      },
+      {
+        "step": "你的内心",
+        "fields": [
+          {"key": "性格", "label": "性格关键词", "type": "multiselect", "hint": "多选用逗号分隔", "placeholder": "谨慎, 野心, 自由, 务实, 浪漫, 内向, 好奇, 理性, 冒险"},
+          {"key": "人生目标", "label": "当前人生目标", "type": "text", "placeholder": "如：成为产品经理 / 环游世界 / 财务自由 / 把日子过好"},
+          {"key": "最在意", "label": "你最在意的东西", "type": "select", "options": ["财富", "自由", "家庭", "成就", "爱情", "稳定", "名望", "兴趣", "体验"]},
+          {"key": "模拟风格", "label": "模拟风格", "type": "select", "options": ["极度现实", "现实但允许戏剧性偶然", "电影级现实主义"]},
+          {"key": "允许现实大事件", "label": "允许现实世界重大事件影响人生", "type": "boolean", "checkbox_label": "是（世界会发生你无法控制的大事）"}
+        ]
+      }
+    ]
+  }
+}
