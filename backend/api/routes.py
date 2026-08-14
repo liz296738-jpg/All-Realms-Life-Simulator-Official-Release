@@ -76,6 +76,26 @@ def _resolve_world(world_id: str | None, client_id: str | None) -> dict:
     return w
 
 
+def _session_world(state: dict, client_id: str | None) -> dict:
+    """解析会话所属世界，供旁路接口（提取 NPC 情报等）取 world context。
+
+    - 内置世界直接命中；自定义世界配置落盘于 data/worlds/<id>.json（并非内嵌存档），
+      get_world 本就能读到——关键是作者校验必须传真实 client_id，而非 None（否则
+      owner != "" 恒成立，自定义世界被误判 404「世界不存在」）。
+    - 若世界确实丢失（data/worlds 被清 / 世界被删），不抛 404 阻断提取——退回 douluo
+      模板兜底，state_summary 仍能渲染状态，情报提取不依赖规则书全文。
+    """
+    world_id = (state.get("meta") or {}).get("world_id") or "douluo"
+    try:
+        return _resolve_world(world_id, client_id)
+    except HTTPException:
+        fallback = worlds.get_world("douluo")
+        return fallback or {
+            "id": "douluo", "name": "魂兽大陆", "kind": "builtin",
+            "state_template": {}, "creation_schema": {}, "rulebook": "",
+        }
+
+
 # 建世界限流：单 client 5 次/小时（构建用玩家 Key 计费，但存储/IO 仍是站点资源）
 _BUILD_WINDOW = 3600
 _BUILD_LIMIT = 5
@@ -586,7 +606,7 @@ def extract_npc_profiles(req: ExtractNpcProfilesRequest):
     """AI 提取 NPC 结构化情报：读取游戏上下文 → DeepSeek → 返回结构化档案。"""
     sess = _load_session(req.session_id)
     state = sess["state"]
-    world = _resolve_world(state.get("meta", {}).get("world_id") or "douluo", None)
+    world = _session_world(state, req.client_id)
     existing_npcs = state.get("npcs", {})
     # 构建上下文：状态 + 最近 30 条历史
     ctx_lines = [state_summary(state, world), ""]
