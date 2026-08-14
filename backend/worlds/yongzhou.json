@@ -1,0 +1,56 @@
+{
+  "id": "yongzhou",
+  "name": "永昼便利店",
+  "kind": "builtin",
+  "owner": null,
+  "desc": "规则怪谈·都市恐怖·生存解谜：凌晨的永昼便利店，一张黄色工牌、一页残破的员工守则、一个七日循环。你能活着看到日出吗？",
+  "rulebook_file": "backend/prompts/yongzhou_system_prompt.txt",
+  "summary": "yongzhou",
+  "state_template": {
+    "character": {
+      "name": "无名",
+      "gender": "?",
+      "age": 22,
+      "身份": "永昼便利店夜班店员",
+      "background": "",
+      "secret": "",
+      "traits": [],
+      "day": {"init": 1, "min": 1, "max": 7, "max_step": 1}
+    },
+    "level_field": "day",
+    "resources": {
+      "物资": {"init": 3, "min": 0}
+    },
+    "stats": {
+      "理智": {"init": 100, "min": 0, "max": 100, "max_step": 30},
+      "污染": {"init": 0, "min": 0, "max": 100, "max_step": 30}
+    },
+    "affection_chars": ["老周", "小夏"],
+    "affection_min": -100,
+    "affection_max": 100,
+    "factions": [],
+    "inventory": [],
+    "start_location": "永昼便利店·夜班",
+    "meta": {"rewind_left": 3}
+  },
+  "creation_schema": {
+    "steps": [
+      {
+        "step": "你是谁",
+        "fields": [
+          {"key": "name", "label": "姓名", "type": "text", "placeholder": "你的名字", "required": true},
+          {"key": "gender", "label": "性别", "type": "select", "options": ["男", "女"], "required": true},
+          {"key": "age", "label": "年龄", "type": "number", "min": 18, "max": 40, "default": 22}
+        ]
+      },
+      {
+        "step": "上岗之前",
+        "fields": [
+          {"key": "background", "label": "上夜班的理由", "type": "textarea", "rows": 2, "placeholder": "缺钱？躲人？还是别的什么……"},
+          {"key": "secret", "label": "心里的秘密", "type": "textarea", "rows": 2, "placeholder": "你不想被任何同事知道的事……"},
+          {"key": "traits", "label": "性格特质", "type": "multiselect", "hint": "多选用逗号分隔", "placeholder": "冷静, 胆小, 敏锐, 冲动, 多疑, 心软"}
+        ]
+      }
+    ]
+  }
+}
