@@ -1,0 +1,57 @@
+{
+  "id": "shuguang",
+  "name": "曙光废土",
+  "kind": "builtin",
+  "owner": null,
+  "desc": "末日丧尸·生存护送：护送最高机密的恒温箱穿越废土，在感染度与理智值之间走钢丝，抵达巴别塔揭穿「曙光」的真相。",
+  "rulebook_file": "backend/prompts/shuguang_system_prompt.txt",
+  "summary": "shuguang",
+  "state_template": {
+    "character": {
+      "name": "无名",
+      "gender": "?",
+      "age": 28,
+      "身份": "曙光生物科技公司·底层回收员",
+      "background": "",
+      "secret": "",
+      "traits": [],
+      "进度": {"init": 0, "min": 0, "max": 100, "max_step": 10}
+    },
+    "level_field": "进度",
+    "resources": {
+      "物资点": {"init": 5, "min": 0},
+      "抑制剂": {"init": 2, "min": 0}
+    },
+    "stats": {
+      "感染度": {"init": 20, "min": 0, "max": 100, "max_step": 30},
+      "理智值": {"init": 80, "min": 0, "max": 100, "max_step": 30}
+    },
+    "affection_chars": ["杰克", "安雅"],
+    "affection_min": -100,
+    "affection_max": 100,
+    "factions": [],
+    "inventory": ["磨损的战术撬棍", "无信号军用对讲机", "半瓶浑浊过滤水", "恒温箱"],
+    "start_location": "侧翻的装甲运输车",
+    "meta": {"rewind_left": 3}
+  },
+  "creation_schema": {
+    "steps": [
+      {
+        "step": "你是谁",
+        "fields": [
+          {"key": "name", "label": "姓名", "type": "text", "placeholder": "你的名字", "required": true},
+          {"key": "gender", "label": "性别", "type": "select", "options": ["男", "女"], "required": true},
+          {"key": "age", "label": "年龄", "type": "number", "min": 20, "max": 45, "default": 28}
+        ]
+      },
+      {
+        "step": "末日之前",
+        "fields": [
+          {"key": "background", "label": "进「曙光」之前的身份", "type": "textarea", "rows": 2, "placeholder": "末日降临前，你是做什么的……"},
+          {"key": "secret", "label": "不敢被人知道的秘密", "type": "textarea", "rows": 2, "placeholder": "除了感染，还有更私人的秘密……"},
+          {"key": "traits", "label": "性格特质", "type": "multiselect", "hint": "多选用逗号分隔", "placeholder": "实用主义, 冷静, 多疑, 心软, 果断, 油滑"}
+        ]
+      }
+    ]
+  }
+}
