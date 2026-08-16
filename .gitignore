@@ -30,3 +30,6 @@ venv/
 backend/data/activations.json
 backend/data/saves/
 backend/data/worlds/
+
+# ── 前端 / Node 依赖 ──
+node_modules/
