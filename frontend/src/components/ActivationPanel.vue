@@ -127,8 +127,19 @@ const trialLeft = () => Math.max(0, entitlement.trialLimit - entitlement.trialUs
         {{ ui.activationMsg }}
       </p>
 
-      <!-- 微信收款 -->
+      <!-- 主推通道（小红书自动发货，置顶） -->
+      <div class="mb-3 rounded-lg border-2 border-red-500/60 bg-red-500/15 p-3 text-center">
+        <p class="text-sm font-bold text-red-300 mb-2">⭐ 推荐：最快获取，24小时自动发货</p>
+        <a href="http://xhslink.cn/o/7t8lsg92E0e" target="_blank" rel="noopener noreferrer"
+          class="inline-block px-5 py-2.5 rounded-lg bg-red-500 text-white font-semibold hover:bg-red-400 transition text-sm">
+          📕 去小红书店铺购买
+        </a>
+        <p class="text-[11px] text-red-300/80 mt-1.5">付款后自动发货激活码，无需等待人工回复</p>
+      </div>
+
+      <!-- 备用通道（微信扫码，下移） -->
       <div class="mb-3 rounded-lg border border-stone-700 bg-stone-800/60 p-3 text-center">
+        <p class="text-[11px] text-stone-500 mb-2">—— 备用通道 ——</p>
         <img :src="wechatQr" alt="微信收款码" class="w-32 h-32 mx-auto rounded object-contain bg-white p-1 mb-2" />
         <p class="text-sm text-stone-200 font-medium mb-1">微信扫码支付 1 元</p>
         <p class="text-xs text-stone-400 leading-relaxed">
@@ -138,16 +149,15 @@ const trialLeft = () => Math.max(0, entitlement.trialLimit - entitlement.trialUs
         </p>
       </div>
 
-      <!-- 防风控提示 -->
-      <p class="mb-2 rounded-md border border-amber-700/40 bg-amber-950/30 p-2.5 text-xs leading-relaxed text-amber-400">
-        ⚠️ 温馨提示：如果微信扫码提示风险、无法支付或长时间未回复，请务必使用下方【备用通道】自动获取激活码。
+      <!-- 微信防催更免责声明（核心） -->
+      <p class="mb-2 rounded-md border border-orange-500/60 bg-orange-500/10 p-2.5 text-xs leading-relaxed text-orange-300 font-medium">
+        ⚠️ 温馨提示：博主回复微信信息不及时，通常只能在每天晚上统一回复并发放激活码。如果您比较着急游玩，请务必使用上方的小红书自动发货通道！
       </p>
 
-      <!-- 备用通道（小红书自动发货） -->
-      <a href="http://xhslink.cn/o/7t8lsg92E0e" target="_blank" rel="noopener noreferrer"
-        class="mb-3 block text-center py-2 rounded border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 transition text-sm font-medium">
-        📕 备用通道：去小红书店铺购买 (24小时自动发货)
-      </a>
+      <!-- 防风控提示 -->
+      <p class="mb-2 rounded-md border border-amber-700/40 bg-amber-950/30 p-2.5 text-xs leading-relaxed text-amber-400">
+        ⚠️ 温馨提示：如果微信扫码提示风险、无法支付或长时间未回复，请务必使用上方【小红书】推荐通道自动获取激活码。
+      </p>
 
       <!-- 输码激活 -->
       <input v-model="code" @keyup.enter="submit" :disabled="busy"
