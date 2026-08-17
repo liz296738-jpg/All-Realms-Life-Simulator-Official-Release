@@ -1,0 +1,83 @@
+{
+  "id": "zhujie",
+  "name": "诸界魔典",
+  "kind": "builtin",
+  "owner": null,
+  "desc": "超高自由度西方魔幻人生沙盘：魔法是世界的自然规律之一，你不是被选中的勇者，只是这世界出生的一个人。",
+  "rulebook_file": "backend/prompts/zhujie_system_prompt.txt",
+  "summary": "zhujie",
+  "state_template": {
+    "character": {
+      "name": "无名",
+      "gender": "?",
+      "种族": "人类",
+      "时代": "魔法繁荣时代",
+      "出生身份": "平民",
+      "出生地": "",
+      "家庭状况": "",
+      "初始技能": "",
+      "魔法资质": "普通",
+      "初始信仰": "无",
+      "性格": [],
+      "人生目标": "",
+      "模拟风格": "经典西幻冒险",
+      "年龄": {"init": 18, "min": 10, "max": 300, "max_step": 1}
+    },
+    "level_field": "年龄",
+    "resources": {
+      "铜币": {"init": 100, "min": 0},
+      "银币": {"init": 0, "min": 0},
+      "金币": {"init": 0, "min": 0}
+    },
+    "stats": {
+      "魔力": {"init": 0, "min": 0, "max": 1000, "max_step": 30},
+      "精力": {"init": 70, "min": 0, "max": 100, "max_step": 30},
+      "健康": {"init": 80, "min": 0, "max": 100, "max_step": 30},
+      "压力": {"init": 30, "min": 0, "max": 100, "max_step": 30}
+    },
+    "affection_chars": [],
+    "affection_min": -100,
+    "affection_max": 100,
+    "factions": [],
+    "inventory": [],
+    "start_location": "大陆·某城镇",
+    "meta": {"rewind_left": 3}
+  },
+  "creation_schema": {
+    "steps": [
+      {
+        "step": "你是谁",
+        "fields": [
+          {"key": "name", "label": "姓名", "type": "text", "placeholder": "你的名字", "required": true},
+          {"key": "gender", "label": "性别", "type": "select", "options": ["男", "女", "自定义"], "required": true},
+          {"key": "种族", "label": "种族", "type": "select", "options": ["人类", "精灵", "矮人", "半身人", "兽人", "龙裔", "地精", "妖精族", "魔族", "自定义"], "required": true, "hint": "种族影响生理、寿命、文化与天赋，不等于职业"}
+        ]
+      },
+      {
+        "step": "时代与出身",
+        "fields": [
+          {"key": "时代", "label": "出生时代", "type": "select", "options": ["黄金王国时代", "魔法繁荣时代", "群雄割据时代", "大魔灾前夕", "魔族入侵时代", "战后重建时代", "自定义时代"], "required": true},
+          {"key": "出生身份", "label": "出生身份", "type": "select", "options": ["农民", "工匠", "商人", "平民", "学徒", "冒险者家庭", "骑士家庭", "贵族", "教会家庭", "学院家庭", "王室", "自定义"], "required": true},
+          {"key": "出生地", "label": "出生地", "type": "text", "placeholder": "如：边境小镇 / 王都 / 精灵森林边缘"},
+          {"key": "家庭状况", "label": "家庭状况", "type": "text", "placeholder": "如：务农为生 / 小贵族旁支 / 父母双亡"}
+        ]
+      },
+      {
+        "step": "天赋与信仰",
+        "fields": [
+          {"key": "魔法资质", "label": "魔法资质", "type": "select", "options": ["无魔法天赋", "普通", "良好", "优秀", "特殊", "随机"], "required": true},
+          {"key": "初始技能", "label": "初始技能", "type": "text", "placeholder": "如：识字、种地、基础剑术、见习神术"},
+          {"key": "初始信仰", "label": "初始信仰", "type": "select", "options": ["无", "光明", "战争", "丰收", "智慧", "海洋", "死亡", "自然", "知识", "财富", "命运", "自定义"]}
+        ]
+      },
+      {
+        "step": "你的内心",
+        "fields": [
+          {"key": "性格", "label": "性格关键词", "type": "multiselect", "hint": "多选用逗号分隔", "placeholder": "谨慎, 野心, 自由, 务实, 浪漫, 内向, 好奇, 理性, 冒险"},
+          {"key": "人生目标", "label": "当前人生目标", "type": "text", "placeholder": "如：成为宫廷法师 / 经营商队 / 守护家人 / 环游大陆"},
+          {"key": "模拟风格", "label": "模拟风格", "type": "select", "options": ["极度现实", "经典西幻冒险", "史诗魔幻", "黑暗奇幻", "日常人生", "混合模式"]}
+        ]
+      }
+    ]
+  }
+}
