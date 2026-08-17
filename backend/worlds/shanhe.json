@@ -1,0 +1,72 @@
+{
+  "id": "shanhe",
+  "name": "山河万象",
+  "kind": "builtin",
+  "owner": null,
+  "desc": "历史锚定型超高自由度古代人生沙盘：你不是在玩皇帝，而是在经历一个时代——真实历史、历史镜像或历史改写，从农民到帝王，或一生只是个普通人。",
+  "rulebook_file": "backend/prompts/shanhe_system_prompt.txt",
+  "summary": "shanhe",
+  "state_template": {
+    "character": {
+      "name": "无名",
+      "gender": "?",
+      "时代": "隋唐",
+      "历史模式": "真实历史",
+      "出生身份": "普通农民",
+      "籍贯": "",
+      "家庭情况": "",
+      "当前职业": "",
+      "初始财富": "",
+      "人生目标": "",
+      "年龄": {"init": 18, "min": 1, "max": 100, "max_step": 1}
+    },
+    "level_field": "年龄",
+    "resources": {
+      "铜钱": {"init": 200, "min": 0},
+      "白银": {"init": 0, "min": 0},
+      "黄金": {"init": 0, "min": 0}
+    },
+    "stats": {
+      "精力": {"init": 70, "min": 0, "max": 100, "max_step": 30},
+      "健康": {"init": 80, "min": 0, "max": 100, "max_step": 30},
+      "压力": {"init": 30, "min": 0, "max": 100, "max_step": 30},
+      "名声": {"init": 0, "min": -1000, "max": 1000, "max_step": 30}
+    },
+    "affection_chars": [],
+    "affection_min": -100,
+    "affection_max": 100,
+    "factions": [],
+    "inventory": [],
+    "start_location": "某县·乡里",
+    "meta": {"rewind_left": 3}
+  },
+  "creation_schema": {
+    "steps": [
+      {
+        "step": "你是谁",
+        "fields": [
+          {"key": "name", "label": "姓名", "type": "text", "placeholder": "你的名字", "required": true},
+          {"key": "gender", "label": "性别", "type": "select", "options": ["男", "女"], "required": true},
+          {"key": "出生身份", "label": "出生身份", "type": "select", "options": ["普通农民", "佃农", "工匠", "商人", "军户", "猎户", "士子", "小吏", "地方豪族", "武将", "官员", "宗室", "宫廷人物", "自定义"], "required": true, "hint": "身份决定户籍、门第与起点，但不是职业、不是终点"}
+        ]
+      },
+      {
+        "step": "时代与出身",
+        "fields": [
+          {"key": "时代", "label": "时代", "type": "select", "options": ["秦汉", "三国两晋", "南北朝", "隋唐", "五代十国", "两宋", "元", "明", "清", "自定义具体年份"], "required": true},
+          {"key": "历史模式", "label": "历史模式", "type": "select", "options": ["真实历史", "历史改写", "历史镜像", "随机时代"], "required": true, "hint": "真实历史=进入真实时期；改写=真实开局但可改历史；镜像=虚构王朝影射真实"},
+          {"key": "籍贯", "label": "籍贯", "type": "text", "placeholder": "如：江南某县 / 关中 / 蜀地"},
+          {"key": "家庭情况", "label": "家庭情况", "type": "text", "placeholder": "如：自耕农之家 / 耕读传家 / 父母早亡"}
+        ]
+      },
+      {
+        "step": "你的处境",
+        "fields": [
+          {"key": "当前职业", "label": "当前职业", "type": "text", "placeholder": "如：务农 / 读书备考 / 行商 / 行伍"},
+          {"key": "初始财富", "label": "初始财富", "type": "text", "placeholder": "如：仅够糊口 / 略有薄产 / 家道殷实"},
+          {"key": "人生目标", "label": "人生目标", "type": "text", "placeholder": "如：金榜题名 / 光耀门楣 / 平安度日 / 出人头地"}
+        ]
+      }
+    ]
+  }
+}
