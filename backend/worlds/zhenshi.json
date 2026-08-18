@@ -19,8 +19,9 @@
       "性格": [],
       "人生目标": "",
       "最在意": "自由",
-      "模拟风格": "现实但允许戏剧性偶然",
       "允许现实大事件": true,
+      "past_experience": "",
+      "current_situation": "",
       "年龄": {"init": 22, "min": 18, "max": 100, "max_step": 1}
     },
     "level_field": "年龄",
@@ -65,12 +66,18 @@
         ]
       },
       {
+        "step": "你的过往与当下",
+        "fields": [
+          {"key": "past_experience", "label": "过往核心经历", "type": "textarea", "rows": 4, "placeholder": "简单描述你过去经历过最有影响的事，比如：高中复读过一年，或者谈过一段三年的恋爱最后和平分手。"},
+          {"key": "current_situation", "label": "目前正在发生的事（困境/现状）", "type": "textarea", "rows": 4, "placeholder": "比如：正在准备考研，每天下午和晚上都在疯狂刷高数和线代；或者刚入职一家公司，正在经历痛苦的试用期考核。"}
+        ]
+      },
+      {
         "step": "你的内心",
         "fields": [
           {"key": "性格", "label": "性格关键词", "type": "multiselect", "hint": "多选用逗号分隔", "placeholder": "谨慎, 野心, 自由, 务实, 浪漫, 内向, 好奇, 理性, 冒险"},
           {"key": "人生目标", "label": "当前人生目标", "type": "text", "placeholder": "如：成为产品经理 / 环游世界 / 财务自由 / 把日子过好"},
           {"key": "最在意", "label": "你最在意的东西", "type": "select", "options": ["财富", "自由", "家庭", "成就", "爱情", "稳定", "名望", "兴趣", "体验"]},
-          {"key": "模拟风格", "label": "模拟风格", "type": "select", "options": ["极度现实", "现实但允许戏剧性偶然", "电影级现实主义"]},
           {"key": "允许现实大事件", "label": "允许现实世界重大事件影响人生", "type": "boolean", "checkbox_label": "是（世界会发生你无法控制的大事）"}
         ]
       }
